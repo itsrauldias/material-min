@@ -93,16 +93,48 @@ const t$1=globalThis,i$1=t$1.trustedTypes,s$2=i$1?i$1.createPolicy("lit-html",{c
 
 /**
  * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
+ * Copyright 2022 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
-const t={ATTRIBUTE:1,CHILD:2,PROPERTY:3,BOOLEAN_ATTRIBUTE:4,EVENT:5,ELEMENT:6},e$2=t=>(...e)=>({_$litDirective$:t,values:e});class i{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i;}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}}
+/**
+ * A component for elevation.
+ */
+class Elevation extends s$1 {
+    connectedCallback() {
+        super.connectedCallback();
+        // Needed for VoiceOver, which will create a "group" if the element is a
+        // sibling to other content.
+        this.setAttribute('aria-hidden', 'true');
+    }
+    render() {
+        return x `<span class="shadow"></span>`;
+    }
+}
+
+/**
+  * @license
+  * Copyright 2022 Google LLC
+  * SPDX-License-Identifier: Apache-2.0
+  */
+const styles$6 = i$3 `:host{--_level: var(--md-elevation-level, 0);--_shadow-color: var(--md-elevation-shadow-color, var(--md-sys-color-shadow, #000));display:flex;pointer-events:none}:host,.shadow,.shadow::before,.shadow::after{border-radius:inherit;inset:0;position:absolute;transition-duration:inherit;transition-property:inherit;transition-timing-function:inherit}.shadow::before,.shadow::after{content:"";transition-property:box-shadow,opacity}.shadow::before{box-shadow:0px calc(1px*(clamp(0,var(--_level),1) + clamp(0,var(--_level) - 3,1) + 2*clamp(0,var(--_level) - 4,1))) calc(1px*(2*clamp(0,var(--_level),1) + clamp(0,var(--_level) - 2,1) + clamp(0,var(--_level) - 4,1))) 0px var(--_shadow-color);opacity:.3}.shadow::after{box-shadow:0px calc(1px*(clamp(0,var(--_level),1) + clamp(0,var(--_level) - 1,1) + 2*clamp(0,var(--_level) - 2,3))) calc(1px*(3*clamp(0,var(--_level),2) + 2*clamp(0,var(--_level) - 2,3))) calc(1px*(clamp(0,var(--_level),4) + 2*clamp(0,var(--_level) - 4,1))) var(--_shadow-color);opacity:.15}/*# sourceMappingURL=elevation-styles.css.map */
+`;
 
 /**
  * @license
- * Copyright 2018 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */const e$1=e$2(class extends i{constructor(t$1){if(super(t$1),t$1.type!==t.ATTRIBUTE||"class"!==t$1.name||t$1.strings?.length>2)throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.")}render(t){return " "+Object.keys(t).filter((s=>t[s])).join(" ")+" "}update(s,[i]){if(void 0===this.it){this.it=new Set,void 0!==s.strings&&(this.st=new Set(s.strings.join(" ").split(/\s/).filter((t=>""!==t))));for(const t in i)i[t]&&!this.st?.has(t)&&this.it.add(t);return this.render(i)}const r=s.element.classList;for(const t of this.it)t in i||(r.remove(t),this.it.delete(t));for(const t in i){const s=!!i[t];s===this.it.has(t)||this.st?.has(t)||(s?(r.add(t),this.it.add(t)):(r.remove(t),this.it.delete(t)));}return w}});
+ * Copyright 2022 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/**
+ * The `<md-elevation>` custom element with default styles.
+ *
+ * Elevation is the relative distance between two surfaces along the z-axis.
+ */
+let MdElevation = class MdElevation extends Elevation {
+};
+MdElevation.styles = [styles$6];
+MdElevation = __decorate([
+    t$3('md-elevation')
+], MdElevation);
 
 /**
  * @license
@@ -232,6 +264,139 @@ class AttachableController {
  * SPDX-License-Identifier: Apache-2.0
  */
 /**
+ * Events that the focus ring listens to.
+ *
+ * @fires visibility-changed Fired whenever `visible` changes.
+ */
+const EVENTS$1 = ['focusin', 'focusout', 'pointerdown'];
+/**
+ * A focus ring component.
+ */
+class FocusRing extends s$1 {
+    constructor() {
+        super(...arguments);
+        /**
+         * Makes the focus ring visible.
+         */
+        this.visible = false;
+        /**
+         * Makes the focus ring animate inwards instead of outwards.
+         */
+        this.inward = false;
+        this.attachableController = new AttachableController(this, this.onControlChange.bind(this));
+    }
+    get htmlFor() {
+        return this.attachableController.htmlFor;
+    }
+    set htmlFor(htmlFor) {
+        this.attachableController.htmlFor = htmlFor;
+    }
+    get control() {
+        return this.attachableController.control;
+    }
+    set control(control) {
+        this.attachableController.control = control;
+    }
+    attach(control) {
+        this.attachableController.attach(control);
+    }
+    detach() {
+        this.attachableController.detach();
+    }
+    connectedCallback() {
+        super.connectedCallback();
+        // Needed for VoiceOver, which will create a "group" if the element is a
+        // sibling to other content.
+        this.setAttribute('aria-hidden', 'true');
+    }
+    /** @private */
+    handleEvent(event) {
+        if (event[HANDLED_BY_FOCUS_RING]) {
+            // This ensures the focus ring does not activate when multiple focus rings
+            // are used within a single component.
+            return;
+        }
+        switch (event.type) {
+            default:
+                return;
+            case 'focusin':
+                this.visible = this.control?.matches(':focus-visible') ?? false;
+                break;
+            case 'focusout':
+            case 'pointerdown':
+                this.visible = false;
+                break;
+        }
+        event[HANDLED_BY_FOCUS_RING] = true;
+    }
+    onControlChange(prev, next) {
+        for (const event of EVENTS$1) {
+            prev?.removeEventListener(event, this);
+            next?.addEventListener(event, this);
+        }
+    }
+    update(changed) {
+        if (changed.has('visible')) {
+            // This logic can be removed once the `:has` selector has been introduced
+            // to Firefox. This is necessary to allow correct submenu styles.
+            this.dispatchEvent(new Event('visibility-changed'));
+        }
+        super.update(changed);
+    }
+}
+__decorate([
+    n$2({ type: Boolean, reflect: true })
+], FocusRing.prototype, "visible", void 0);
+__decorate([
+    n$2({ type: Boolean, reflect: true })
+], FocusRing.prototype, "inward", void 0);
+const HANDLED_BY_FOCUS_RING = Symbol('handledByFocusRing');
+
+/**
+  * @license
+  * Copyright 2022 Google LLC
+  * SPDX-License-Identifier: Apache-2.0
+  */
+const styles$5 = i$3 `:host{animation-delay:0s,calc(var(--md-focus-ring-duration, 600ms)*.25);animation-duration:calc(var(--md-focus-ring-duration, 600ms)*.25),calc(var(--md-focus-ring-duration, 600ms)*.75);animation-timing-function:cubic-bezier(0.2, 0, 0, 1);box-sizing:border-box;color:var(--md-focus-ring-color, var(--md-sys-color-secondary, #625b71));display:none;pointer-events:none;position:absolute}:host([visible]){display:flex}:host(:not([inward])){animation-name:outward-grow,outward-shrink;border-end-end-radius:calc(var(--md-focus-ring-shape-end-end, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));border-end-start-radius:calc(var(--md-focus-ring-shape-end-start, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));border-start-end-radius:calc(var(--md-focus-ring-shape-start-end, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));border-start-start-radius:calc(var(--md-focus-ring-shape-start-start, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));inset:calc(-1*var(--md-focus-ring-outward-offset, 2px));outline:var(--md-focus-ring-width, 3px) solid currentColor}:host([inward]){animation-name:inward-grow,inward-shrink;border-end-end-radius:calc(var(--md-focus-ring-shape-end-end, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border-end-start-radius:calc(var(--md-focus-ring-shape-end-start, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border-start-end-radius:calc(var(--md-focus-ring-shape-start-end, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border-start-start-radius:calc(var(--md-focus-ring-shape-start-start, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border:var(--md-focus-ring-width, 3px) solid currentColor;inset:var(--md-focus-ring-inward-offset, 0px)}@keyframes outward-grow{from{outline-width:0}to{outline-width:var(--md-focus-ring-active-width, 8px)}}@keyframes outward-shrink{from{outline-width:var(--md-focus-ring-active-width, 8px)}}@keyframes inward-grow{from{border-width:0}to{border-width:var(--md-focus-ring-active-width, 8px)}}@keyframes inward-shrink{from{border-width:var(--md-focus-ring-active-width, 8px)}}@media(prefers-reduced-motion){:host{animation:none}}/*# sourceMappingURL=focus-ring-styles.css.map */
+`;
+
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/**
+ * TODO(b/267336424): add docs
+ *
+ * @final
+ * @suppress {visibility}
+ */
+let MdFocusRing = class MdFocusRing extends FocusRing {
+};
+MdFocusRing.styles = [styles$5];
+MdFocusRing = __decorate([
+    t$3('md-focus-ring')
+], MdFocusRing);
+
+/**
+ * @license
+ * Copyright 2017 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+const t={ATTRIBUTE:1,CHILD:2,PROPERTY:3,BOOLEAN_ATTRIBUTE:4,EVENT:5,ELEMENT:6},e$2=t=>(...e)=>({_$litDirective$:t,values:e});class i{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i;}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}}
+
+/**
+ * @license
+ * Copyright 2018 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */const e$1=e$2(class extends i{constructor(t$1){if(super(t$1),t$1.type!==t.ATTRIBUTE||"class"!==t$1.name||t$1.strings?.length>2)throw Error("`classMap()` can only be used in the `class` attribute and must be the only part in the attribute.")}render(t){return " "+Object.keys(t).filter((s=>t[s])).join(" ")+" "}update(s,[i]){if(void 0===this.it){this.it=new Set,void 0!==s.strings&&(this.st=new Set(s.strings.join(" ").split(/\s/).filter((t=>""!==t))));for(const t in i)i[t]&&!this.st?.has(t)&&this.it.add(t);return this.render(i)}const r=s.element.classList;for(const t of this.it)t in i||(r.remove(t),this.it.delete(t));for(const t in i){const s=!!i[t];s===this.it.has(t)||this.st?.has(t)||(s?(r.add(t),this.it.add(t)):(r.remove(t),this.it.delete(t)));}return w}});
+
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/**
  * Easing functions to use for web animations.
  *
  * **NOTE:** `EASING.EMPHASIZED` is approximated with unknown accuracy.
@@ -308,7 +473,7 @@ var State;
 /**
  * Events that the ripple listens to.
  */
-const EVENTS$1 = [
+const EVENTS = [
     'click', 'contextmenu', 'pointercancel', 'pointerdown', 'pointerenter',
     'pointerleave', 'pointerup'
 ];
@@ -624,7 +789,7 @@ class Ripple extends s$1 {
         }
     }
     onControlChange(prev, next) {
-        for (const event of EVENTS$1) {
+        for (const event of EVENTS) {
             prev?.removeEventListener(event, this);
             next?.addEventListener(event, this);
         }
@@ -648,7 +813,7 @@ __decorate([
   * Copyright 2022 Google LLC
   * SPDX-License-Identifier: Apache-2.0
   */
-const styles$6 = i$3 `:host{--_hover-color: var(--md-ripple-hover-color, var(--md-sys-color-on-surface, #1d1b20));--_hover-opacity: var(--md-ripple-hover-opacity, 0.08);--_pressed-color: var(--md-ripple-pressed-color, var(--md-sys-color-on-surface, #1d1b20));--_pressed-opacity: var(--md-ripple-pressed-opacity, 0.12);display:flex;margin:auto;pointer-events:none}:host([disabled]){display:none}@media(forced-colors: active){:host{display:none}}:host,.surface{border-radius:inherit;position:absolute;inset:0;overflow:hidden}.surface{-webkit-tap-highlight-color:rgba(0,0,0,0)}.surface::before,.surface::after{content:"";opacity:0;position:absolute}.surface::before{background-color:var(--_hover-color);inset:0;transition:opacity 15ms linear,background-color 15ms linear}.surface::after{background:radial-gradient(closest-side, var(--_pressed-color) max(100% - 70px, 65%), transparent 100%);transform-origin:center center;transition:opacity 375ms linear}.hovered::before{background-color:var(--_hover-color);opacity:var(--_hover-opacity)}.pressed::after{opacity:var(--_pressed-opacity);transition-duration:105ms}/*# sourceMappingURL=ripple-styles.css.map */
+const styles$4 = i$3 `:host{--_hover-color: var(--md-ripple-hover-color, var(--md-sys-color-on-surface, #1d1b20));--_hover-opacity: var(--md-ripple-hover-opacity, 0.08);--_pressed-color: var(--md-ripple-pressed-color, var(--md-sys-color-on-surface, #1d1b20));--_pressed-opacity: var(--md-ripple-pressed-opacity, 0.12);display:flex;margin:auto;pointer-events:none}:host([disabled]){display:none}@media(forced-colors: active){:host{display:none}}:host,.surface{border-radius:inherit;position:absolute;inset:0;overflow:hidden}.surface{-webkit-tap-highlight-color:rgba(0,0,0,0)}.surface::before,.surface::after{content:"";opacity:0;position:absolute}.surface::before{background-color:var(--_hover-color);inset:0;transition:opacity 15ms linear,background-color 15ms linear}.surface::after{background:radial-gradient(closest-side, var(--_pressed-color) max(100% - 70px, 65%), transparent 100%);transform-origin:center center;transition:opacity 375ms linear}.hovered::before{background-color:var(--_hover-color);opacity:var(--_hover-opacity)}.pressed::after{opacity:var(--_pressed-opacity);transition-duration:105ms}/*# sourceMappingURL=ripple-styles.css.map */
 `;
 
 /**
@@ -671,175 +836,10 @@ const styles$6 = i$3 `:host{--_hover-color: var(--md-ripple-hover-color, var(--m
  */
 let MdRipple = class MdRipple extends Ripple {
 };
-MdRipple.styles = [styles$6];
+MdRipple.styles = [styles$4];
 MdRipple = __decorate([
     t$3('md-ripple')
 ], MdRipple);
-
-/**
- * @license
- * Copyright 2022 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/**
- * A component for elevation.
- */
-class Elevation extends s$1 {
-    connectedCallback() {
-        super.connectedCallback();
-        // Needed for VoiceOver, which will create a "group" if the element is a
-        // sibling to other content.
-        this.setAttribute('aria-hidden', 'true');
-    }
-    render() {
-        return x `<span class="shadow"></span>`;
-    }
-}
-
-/**
-  * @license
-  * Copyright 2022 Google LLC
-  * SPDX-License-Identifier: Apache-2.0
-  */
-const styles$5 = i$3 `:host{--_level: var(--md-elevation-level, 0);--_shadow-color: var(--md-elevation-shadow-color, var(--md-sys-color-shadow, #000));display:flex;pointer-events:none}:host,.shadow,.shadow::before,.shadow::after{border-radius:inherit;inset:0;position:absolute;transition-duration:inherit;transition-property:inherit;transition-timing-function:inherit}.shadow::before,.shadow::after{content:"";transition-property:box-shadow,opacity}.shadow::before{box-shadow:0px calc(1px*(clamp(0,var(--_level),1) + clamp(0,var(--_level) - 3,1) + 2*clamp(0,var(--_level) - 4,1))) calc(1px*(2*clamp(0,var(--_level),1) + clamp(0,var(--_level) - 2,1) + clamp(0,var(--_level) - 4,1))) 0px var(--_shadow-color);opacity:.3}.shadow::after{box-shadow:0px calc(1px*(clamp(0,var(--_level),1) + clamp(0,var(--_level) - 1,1) + 2*clamp(0,var(--_level) - 2,3))) calc(1px*(3*clamp(0,var(--_level),2) + 2*clamp(0,var(--_level) - 2,3))) calc(1px*(clamp(0,var(--_level),4) + 2*clamp(0,var(--_level) - 4,1))) var(--_shadow-color);opacity:.15}/*# sourceMappingURL=elevation-styles.css.map */
-`;
-
-/**
- * @license
- * Copyright 2022 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/**
- * The `<md-elevation>` custom element with default styles.
- *
- * Elevation is the relative distance between two surfaces along the z-axis.
- */
-let MdElevation = class MdElevation extends Elevation {
-};
-MdElevation.styles = [styles$5];
-MdElevation = __decorate([
-    t$3('md-elevation')
-], MdElevation);
-
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/**
- * Events that the focus ring listens to.
- *
- * @fires visibility-changed Fired whenever `visible` changes.
- */
-const EVENTS = ['focusin', 'focusout', 'pointerdown'];
-/**
- * A focus ring component.
- */
-class FocusRing extends s$1 {
-    constructor() {
-        super(...arguments);
-        /**
-         * Makes the focus ring visible.
-         */
-        this.visible = false;
-        /**
-         * Makes the focus ring animate inwards instead of outwards.
-         */
-        this.inward = false;
-        this.attachableController = new AttachableController(this, this.onControlChange.bind(this));
-    }
-    get htmlFor() {
-        return this.attachableController.htmlFor;
-    }
-    set htmlFor(htmlFor) {
-        this.attachableController.htmlFor = htmlFor;
-    }
-    get control() {
-        return this.attachableController.control;
-    }
-    set control(control) {
-        this.attachableController.control = control;
-    }
-    attach(control) {
-        this.attachableController.attach(control);
-    }
-    detach() {
-        this.attachableController.detach();
-    }
-    connectedCallback() {
-        super.connectedCallback();
-        // Needed for VoiceOver, which will create a "group" if the element is a
-        // sibling to other content.
-        this.setAttribute('aria-hidden', 'true');
-    }
-    /** @private */
-    handleEvent(event) {
-        if (event[HANDLED_BY_FOCUS_RING]) {
-            // This ensures the focus ring does not activate when multiple focus rings
-            // are used within a single component.
-            return;
-        }
-        switch (event.type) {
-            default:
-                return;
-            case 'focusin':
-                this.visible = this.control?.matches(':focus-visible') ?? false;
-                break;
-            case 'focusout':
-            case 'pointerdown':
-                this.visible = false;
-                break;
-        }
-        event[HANDLED_BY_FOCUS_RING] = true;
-    }
-    onControlChange(prev, next) {
-        for (const event of EVENTS) {
-            prev?.removeEventListener(event, this);
-            next?.addEventListener(event, this);
-        }
-    }
-    update(changed) {
-        if (changed.has('visible')) {
-            // This logic can be removed once the `:has` selector has been introduced
-            // to Firefox. This is necessary to allow correct submenu styles.
-            this.dispatchEvent(new Event('visibility-changed'));
-        }
-        super.update(changed);
-    }
-}
-__decorate([
-    n$2({ type: Boolean, reflect: true })
-], FocusRing.prototype, "visible", void 0);
-__decorate([
-    n$2({ type: Boolean, reflect: true })
-], FocusRing.prototype, "inward", void 0);
-const HANDLED_BY_FOCUS_RING = Symbol('handledByFocusRing');
-
-/**
-  * @license
-  * Copyright 2022 Google LLC
-  * SPDX-License-Identifier: Apache-2.0
-  */
-const styles$4 = i$3 `:host{animation-delay:0s,calc(var(--md-focus-ring-duration, 600ms)*.25);animation-duration:calc(var(--md-focus-ring-duration, 600ms)*.25),calc(var(--md-focus-ring-duration, 600ms)*.75);animation-timing-function:cubic-bezier(0.2, 0, 0, 1);box-sizing:border-box;color:var(--md-focus-ring-color, var(--md-sys-color-secondary, #625b71));display:none;pointer-events:none;position:absolute}:host([visible]){display:flex}:host(:not([inward])){animation-name:outward-grow,outward-shrink;border-end-end-radius:calc(var(--md-focus-ring-shape-end-end, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));border-end-start-radius:calc(var(--md-focus-ring-shape-end-start, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));border-start-end-radius:calc(var(--md-focus-ring-shape-start-end, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));border-start-start-radius:calc(var(--md-focus-ring-shape-start-start, var(--md-focus-ring-shape, 9999px)) + var(--md-focus-ring-outward-offset, 2px));inset:calc(-1*var(--md-focus-ring-outward-offset, 2px));outline:var(--md-focus-ring-width, 3px) solid currentColor}:host([inward]){animation-name:inward-grow,inward-shrink;border-end-end-radius:calc(var(--md-focus-ring-shape-end-end, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border-end-start-radius:calc(var(--md-focus-ring-shape-end-start, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border-start-end-radius:calc(var(--md-focus-ring-shape-start-end, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border-start-start-radius:calc(var(--md-focus-ring-shape-start-start, var(--md-focus-ring-shape, 9999px)) - var(--md-focus-ring-inward-offset, 0px));border:var(--md-focus-ring-width, 3px) solid currentColor;inset:var(--md-focus-ring-inward-offset, 0px)}@keyframes outward-grow{from{outline-width:0}to{outline-width:var(--md-focus-ring-active-width, 8px)}}@keyframes outward-shrink{from{outline-width:var(--md-focus-ring-active-width, 8px)}}@keyframes inward-grow{from{border-width:0}to{border-width:var(--md-focus-ring-active-width, 8px)}}@keyframes inward-shrink{from{border-width:var(--md-focus-ring-active-width, 8px)}}@media(prefers-reduced-motion){:host{animation:none}}/*# sourceMappingURL=focus-ring-styles.css.map */
-`;
-
-/**
- * @license
- * Copyright 2021 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-/**
- * TODO(b/267336424): add docs
- *
- * @final
- * @suppress {visibility}
- */
-let MdFocusRing = class MdFocusRing extends FocusRing {
-};
-MdFocusRing.styles = [styles$4];
-MdFocusRing = __decorate([
-    t$3('md-focus-ring')
-], MdFocusRing);
 
 /**
  * @license
